@@ -102,12 +102,7 @@ class ImportDirfFiles {
 		define('APP_DIR', dirname(dirname(__FILE__)));
 		define('DS', DIRECTORY_SEPARATOR);
 
-		$this->__databaseConfig = array(
-			'host'     => '127.0.0.1',
-			'user'     => 'root',
-			'password' => '',
-			'database' => 'income_reports'
-		);
+		$this->__databaseConfig = json_decode(file_get_contents('database_config.json'), true);
 
 		$this->__dirfFilesDirectory = dirname(__FILE__) . DS . 'dirf_files';
 
@@ -481,7 +476,7 @@ class ImportDirfFiles {
 				case 'RIVC':
 				case 'RIBMR':
 				case 'RICAP':
-					$this->__importRendimentosMensais($line);
+					$this->__importMonthlyIncomes($line);
 					break;
 				//@todo Verificar a necessidade de importar registros anuais
 				/*case 'RIL96':
@@ -808,8 +803,8 @@ class ImportDirfFiles {
 	 * @access private
 	 * @return void
 	 */
-	private function __importRendimentosMensais($line) {
-		// Configura os dados da linha vigente de acordo com as respectivas colunas da tabela "rendimentos_mensais" no banco de dados
+	private function __importMonthlyIncomes($line) {
+		// Configura os dados da linha vigente de acordo com as respectivas colunas da tabela "monthly_incomes" no banco de dados
 		for ($c = 1; $c <= 13; $c++) {
 			$value = !empty($line[$c]) ? floatval(intval($line[$c]) / 100) : 0;
 			$data = array(
@@ -841,7 +836,7 @@ class ImportDirfFiles {
 
 			// Se o registro já existe, o mesmo é atualizado. Caso contrário, um registro novo é criado
 			if (!is_null($monthly_incomes_id)) {
-				$this->__updateRecord('monthly_incomes', $data, array('id' => $rendimentos_mensais_id));
+				$this->__updateRecord('monthly_incomes', $data, array('id' => $monthly_incomes_id));
 			} else {
 				$data['created'] = $data['modified'];
 
