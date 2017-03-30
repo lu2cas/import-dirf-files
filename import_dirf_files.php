@@ -106,7 +106,12 @@ class ImportDirfFiles {
 
 		$this->__dirfFilesDirectory = dirname(__FILE__) . DS . 'dirf_files';
 
-		$this->__logFile = dirname(__FILE__) . DS . 'log_files' . DS . sprintf('log-%s.txt', date('dmYHis'));
+		$log_directory = dirname(__FILE__) . DS . 'log_files';
+		if (!is_dir($log_directory)) {
+			mkdir($log_directory);
+		}
+
+		$this->__logFile = $log_directory . DS . sprintf('log-%s.txt', date('dmYHis'));
 
 		$this->__connectToDatabase();
 	}
