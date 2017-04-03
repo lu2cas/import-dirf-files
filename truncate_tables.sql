@@ -1,0 +1,9 @@
+truncate table monthly_incomes;
+truncate table bpfdec;
+truncate table bpjdec;
+truncate table idrec;
+truncate table decpj;
+truncate table respo;
+truncate table vrpde;
+truncate table brpde;
+truncate table dirf;
