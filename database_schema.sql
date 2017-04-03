@@ -193,35 +193,91 @@ SELECT
 	IF(`pj`.`id` IS NOT NULL, 'BPJDEC', 'BPFDEC') AS `beneficiary_type`,
 	COALESCE(`pj`.`cnpj`, `pf`.`cpf`) AS `beneficiary_cpf_cnpj`,
 	COALESCE(`pj`.`company_name`, `pf`.`name`) AS `beneficiary_name`,
-	`rm`.`type` AS `monthly_incomes_type`,
-	`rm`.`month` AS `monthly_incomes_month`,
-	`rm`.`value` AS `monthly_incomes_value`
+	`mi`.`type` AS `monthly_incomes_type`,
+	`mi`.`month` AS `monthly_incomes_month`,
+	`mi`.`value` AS `monthly_incomes_value`
 FROM
-	`monthly_incomes` AS `rm`
+	`monthly_incomes` AS `mi`
 LEFT JOIN
 	`bpfdec` AS `pf`
 ON
-	`pf`.`id` = `rm`.`bpfdec_id`
+	`pf`.`id` = `mi`.`bpfdec_id`
 LEFT JOIN
 	`bpjdec` AS `pj`
 ON
-	`pj`.`id` = `rm`.`bpjdec_id`
+	`pj`.`id` = `mi`.`bpjdec_id`
 INNER JOIN
 	`idrec` AS `ir`
 ON
-	`ir`.`id` = `rm`.`idrec_id`
+	`ir`.`id` = `mi`.`idrec_id`
 INNER JOIN
 	`decpj` AS `dj`
 ON
-	`dj`.`id` = `rm`.`decpj_id`
+	`dj`.`id` = `mi`.`decpj_id`
 INNER JOIN
 	`respo` AS `rs`
 ON
-	`rs`.`id` = `rm`.`respo_id`
+	`rs`.`id` = `mi`.`respo_id`
 INNER JOIN
 	`dirf` AS `df`
 ON
-	`df`.`id` = `rm`.`dirf_id`;
+	`df`.`id` = `mi`.`dirf_id`;
+
+CREATE VIEW `yearly_incomes_view` AS
+SELECT
+	`df`.`id` AS `dirf_id`,
+	`df`.`reference_year` AS `dirf_reference_year`,
+	`df`.`calendar_year` AS `dirf_calendar_year`,
+	`df`.`rectification_indicator` AS `dirf_rectification_indicator`,
+	`df`.`receipt_number` AS `dirf_receipt_number`,
+	`df`.`created` AS `dirf_created`,
+	`rs`.`id` AS `respo_id`,
+	`rs`.`name` AS `respo_name`,
+	`rs`.`cpf` AS `respo_cpf`,
+	`dj`.`id` AS `decpj_id`,
+	`dj`.`cnpj` AS `decpj_cnpj`,
+	`dj`.`company_name` AS `decpj_company_name`,
+	`dj`.`declarant_nature` AS `decpj_declarant_nature`,
+	`dj`.`responsible_cpf` AS `decpj_responsible_cpf`,
+	`dj`.`ostensive_partner` AS `decpj_ostensive_partner`,
+	`dj`.`court_decision_depositary` AS `decpj_court_decision_depositary`,
+	`dj`.`investment_fund_institution` AS `decpj_investment_fund_insitution`,
+	`dj`.`incomes_paid_abroad` AS `decpj_incomes_paid_abroad`,
+	`dj`.`private_healthcare` AS `decpj_private_healthcare`,
+	`dj`.`fifa_worldcups_payments` AS `decpj_fifa_worldcups_payments`,
+	`dj`.`olympic_games_payments` AS `decpj_olympic_games_payments`,
+	`dj`.`special_situation` AS `decpj_special_situation`,
+	`dj`.`event_date` AS `decpj_event_date`,
+	`ir`.`id` AS `idrec_id`,
+	`ir`.`revenue_code` AS `idrec_revenue_code`,
+	`pf`.`id` AS `beneficiary_id`,
+	`pf`.`cpf` AS `beneficiary_cpf_cnpj`,
+	`pf`.`name` AS `beneficiary_name`,
+	`yi`.`type` AS `yearly_incomes_type`,
+	`yi`.`description` AS `yearly_incomes_description`,
+	`yi`.`value` AS `yearly_incomes_value`
+FROM
+	`yearly_incomes` AS `yi`
+INNER JOIN
+	`bpfdec` AS `pf`
+ON
+	`pf`.`id` = `yi`.`bpfdec_id`
+INNER JOIN
+	`idrec` AS `ir`
+ON
+	`ir`.`id` = `yi`.`idrec_id`
+INNER JOIN
+	`decpj` AS `dj`
+ON
+	`dj`.`id` = `yi`.`decpj_id`
+INNER JOIN
+	`respo` AS `rs`
+ON
+	`rs`.`id` = `yi`.`respo_id`
+INNER JOIN
+	`dirf` AS `df`
+ON
+	`df`.`id` = `yi`.`dirf_id`;
 
 CREATE VIEW `vrpde_view` AS
 SELECT
