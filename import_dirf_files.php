@@ -713,7 +713,7 @@ class ImportDirfFiles {
 	private function __importBpfdec($line) {
 		/*
 		 * Configura o atributo "__bpjdecId" como nulo para que subsequentemente, na execução do método
-		 * "insertMensais()", os registros de impostos mensais possam ser identificados como pertencentes
+		 * "__importMonthlyIncomes()", os registros de impostos mensais possam ser identificados como pertencentes
 		 * a um beneficiario pessoa física
 		 */
 		$this->__bpjdecId = null;
@@ -762,7 +762,7 @@ class ImportDirfFiles {
 	private function __importBpjdec($line) {
 		/*
 		 * Configura o atributo "__bpfdecId" como nulo para que subsequentemente, na execução do método
-		 * "insertMensais()", os registros de impostos mensais possam ser identificados como pertencentes
+		 * "__importMonthlyIncomes()", os registros de impostos mensais possam ser identificados como pertencentes
 		 * a um beneficiario pessoa jurídica
 		 */
 		$this->__bpfdecId = null;
@@ -870,7 +870,7 @@ class ImportDirfFiles {
 			'modified'    => date('Y-m-d H:i:s')
 		);
 
-		// Verfica a existência de registro equivalente na tabela "monthly_incomes" do banco de dados
+		// Verfica a existência de registro equivalente na tabela "yearly_incomes" do banco de dados
 		$conditions = array(
 			'dirf_id'   => $this->__dirfId,
 			'respo_id'  => $this->__respoId,
