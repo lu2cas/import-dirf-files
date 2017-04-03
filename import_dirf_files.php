@@ -483,12 +483,11 @@ class ImportDirfFiles {
 				case 'RICAP':
 					$this->__importMonthlyIncomes($line);
 					break;
-				//@todo Verificar a necessidade de importar registros anuais
-				/*case 'RIL96':
+				case 'RIL96':
 				case 'RIPTS':
 				case 'RIO':
-					$this->__importAnuais($line);
-					break;*/
+					$this->__importYearlyIncomes($line);
+					break;
 				case 'BRPDE':
 					$this->__importBrpde($line);
 					break;
@@ -802,7 +801,7 @@ class ImportDirfFiles {
 	}
 
 	/**
-	 * Importa dados referentes ao registro de valores mensais de imposto
+	 * Importa dados referentes ao registro de valores mensais de rendimentos e imposto retido na fonte
 	 *
 	 * @param int $line Linha do arquivo DIRF
 	 * @access private
@@ -847,6 +846,49 @@ class ImportDirfFiles {
 
 				$this->__insertRecord('monthly_incomes', $data);
 			}
+		}
+	}
+
+	/**
+	 * Importa dados referentes ao registro de rendimentos isentos anuais
+	 *
+	 * @param int $line Linha do arquivo DIRF
+	 * @access private
+	 * @return void
+	 */
+	private function __importYearlyIncomes($line) {
+		// Configura os dados da linha vigente de acordo com as respectivas colunas da tabela "yearly_incomes" no banco de dados
+		$data = array(
+			'dirf_id'     => $this->__dirfId,
+			'respo_id'    => $this->__respoId,
+			'decpj_id'    => $this->__decpjId,
+			'idrec_id'    => $this->__idrecId,
+			'bpfdec_id'   => $this->__bpfdecId,
+			'type'        => !empty($line[0]) ? utf8_decode($line[0])            : null,
+			'value'       => !empty($line[1]) ? floatval(intval($line[1]) / 100) : 0,
+			'description' => !empty($line[2]) ? utf8_decode($line[2])            : null,
+			'modified'    => date('Y-m-d H:i:s')
+		);
+
+		// Verfica a existência de registro equivalente na tabela "monthly_incomes" do banco de dados
+		$conditions = array(
+			'dirf_id'   => $this->__dirfId,
+			'respo_id'  => $this->__respoId,
+			'decpj_id'  => $this->__decpjId,
+			'idrec_id'  => $this->__idrecId,
+			'bpfdec_id' => $this->__bpfdecId,
+			'type'      => $data['type']
+		);
+
+		$yearly_incomes_id = $this->__selectRecordId('yearly_incomes', $conditions);
+
+		// Se o registro já existe, o mesmo é atualizado. Caso contrário, um registro novo é criado
+		if (!is_null($yearly_incomes_id)) {
+			$this->__updateRecord('yearly_incomes', $data, array('id' => $yearly_incomes_id));
+		} else {
+			$data['created'] = $data['modified'];
+
+			$this->__insertRecord('yearly_incomes', $data);
 		}
 	}
 

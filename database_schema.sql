@@ -100,6 +100,26 @@ CREATE TABLE `monthly_incomes` (
 	CONSTRAINT `montlhy_incomes_bpjdec_id` FOREIGN KEY (`bpjdec_id`) REFERENCES `bpjdec` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Registro de valores mensais';
 
+CREATE TABLE `yearly_incomes` (
+	`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+	`dirf_id` int(10) unsigned NOT NULL,
+	`respo_id` int(10) unsigned NOT NULL,
+	`decpj_id` int(10) unsigned NOT NULL,
+	`idrec_id` int(10) unsigned DEFAULT NULL,
+	`bpfdec_id` int(10) unsigned DEFAULT NULL,
+	`type` enum('RIL96', 'RIPTS', 'RIO') COLLATE utf8_unicode_ci NOT NULL,
+	`descpription` varchar(60) NULL,
+	`value` double unsigned NOT NULL,
+	`created` datetime NOT NULL,
+	`modified` datetime NOT NULL,
+	PRIMARY KEY (`id`),
+	CONSTRAINT `yearly_incomes_dirf_id` FOREIGN KEY (`dirf_id`) REFERENCES `dirf` (`id`),
+	CONSTRAINT `yearly_incomes_respo_id` FOREIGN KEY (`respo_id`) REFERENCES `respo` (`id`),
+	CONSTRAINT `yearly_incomes_decpj_id` FOREIGN KEY (`decpj_id`) REFERENCES `decpj` (`id`),
+	CONSTRAINT `yearly_incomes_idrec_id` FOREIGN KEY (`idrec_id`) REFERENCES `idrec` (`id`),
+	CONSTRAINT `yearly_incomes_bpfdec_id` FOREIGN KEY (`bpfdec_id`) REFERENCES `bpfdec` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Registro de rendimentos anuais isentos';
+
 CREATE TABLE `brpde` (
 	`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
 	`dirf_id` int(10) unsigned NOT NULL,
