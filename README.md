@@ -8,11 +8,13 @@ Estrutura de dados e script de importação dos arquivos de declaração de impo
 ## Modo de uso:
 
 ### Banco de dados:
-Um banco de dados MySQL deve ser criado através do arquivo `database_schema.sql`. Exemplo:
+Um banco de dados MySQL deve ser criado a partir do arquivo `database_schema.sql`. Exemplo:
 `mysql -uroot -p -h127.0.0.1 < database_schema.sql`.
 
+Em seguida o arquivo `database_config.json` deve ser atualizado com os dados do banco de dados recém criado.
+
 ### Estruturação dos arquivos DIRF:
-Na raiz do projeto deve ser criado o diretório `/dirf_files` contendo subdiretórios nomeados de acordo com o ano calendário dos arquivos DIRF neles contidos. Exemplo:
+O diretório `/dirf_files` deve ser criado na raiz do projeto contendo subdiretórios nomeados de acordo com o ano calendário dos arquivos DIRF neles contidos. Exemplo:
 
 ```
 /ImportDirfFiles/
@@ -40,5 +42,5 @@ Na raiz do projeto deve ser criado o diretório `/dirf_files` contendo subdiret�
 Obs.: Os nomes dos arquivos DIRF são irrelevantes.
 
 ### Execução do script de importação de dados:
-Em seguida basta executar o script `import_dirf_files.php` no console de sua preferência. Exemplo: 
-`php import_dirf_files.php`
+Finalmente o script `import_dirf_files.php` pode ser executado no console de sua preferência. Exemplo: 
+`php import_dirf_files.php`.
