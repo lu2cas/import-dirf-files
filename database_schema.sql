@@ -78,7 +78,7 @@ CREATE TABLE `bpjdec` (
 	KEY `bpjdec_cnpj` (`cnpj`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Registro de beneficiário pessoa jurídica do declarante';
 
-CREATE TABLE `monthly_incomes` (
+CREATE TABLE `incomes` (
 	`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
 	`dirf_id` int(10) unsigned NOT NULL,
 	`respo_id` int(10) unsigned NOT NULL,
@@ -86,8 +86,9 @@ CREATE TABLE `monthly_incomes` (
 	`idrec_id` int(10) unsigned DEFAULT NULL,
 	`bpfdec_id` int(10) unsigned DEFAULT NULL,
 	`bpjdec_id` int(10) unsigned DEFAULT NULL,
-	`type` enum('RTRT','RTPO','RTPP','RTDP','RTPA','RTIRF','CJAC','CJAA','ESRT','ESPO','ESPP','ESDP','ESPA','ESIR','ESDJ','RIDAC','RIIRP','RIAP','RIMOG','RIP65','RIVC','RIBMR','RICAP') COLLATE utf8_unicode_ci NOT NULL,
-	`month` int(2) unsigned NOT NULL,
+	`type` enum('RTRT','RTPO','RTPP','RTDP','RTPA','RTIRF','CJAC','CJAA','ESRT','ESPO','ESPP','ESDP','ESPA','ESIR','ESDJ','RIDAC','RIIRP','RIAP','RIMOG','RIP65','RIVC','RIBMR','RICAP','RIL96','RIPTS','RIO') COLLATE utf8_unicode_ci NOT NULL,
+	`description` varchar(60) NULL,
+	`month` int(2) unsigned NULL,
 	`value` double unsigned NOT NULL,
 	`created` datetime NOT NULL,
 	`modified` datetime NOT NULL,
@@ -98,27 +99,7 @@ CREATE TABLE `monthly_incomes` (
 	CONSTRAINT `montlhy_incomes_idrec_id` FOREIGN KEY (`idrec_id`) REFERENCES `idrec` (`id`),
 	CONSTRAINT `montlhy_incomes_bpfdec_id` FOREIGN KEY (`bpfdec_id`) REFERENCES `bpfdec` (`id`),
 	CONSTRAINT `montlhy_incomes_bpjdec_id` FOREIGN KEY (`bpjdec_id`) REFERENCES `bpjdec` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Registro de valores mensais';
-
-CREATE TABLE `yearly_incomes` (
-	`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-	`dirf_id` int(10) unsigned NOT NULL,
-	`respo_id` int(10) unsigned NOT NULL,
-	`decpj_id` int(10) unsigned NOT NULL,
-	`idrec_id` int(10) unsigned DEFAULT NULL,
-	`bpfdec_id` int(10) unsigned DEFAULT NULL,
-	`type` enum('RIL96', 'RIPTS', 'RIO') COLLATE utf8_unicode_ci NOT NULL,
-	`descpription` varchar(60) NULL,
-	`value` double unsigned NOT NULL,
-	`created` datetime NOT NULL,
-	`modified` datetime NOT NULL,
-	PRIMARY KEY (`id`),
-	CONSTRAINT `yearly_incomes_dirf_id` FOREIGN KEY (`dirf_id`) REFERENCES `dirf` (`id`),
-	CONSTRAINT `yearly_incomes_respo_id` FOREIGN KEY (`respo_id`) REFERENCES `respo` (`id`),
-	CONSTRAINT `yearly_incomes_decpj_id` FOREIGN KEY (`decpj_id`) REFERENCES `decpj` (`id`),
-	CONSTRAINT `yearly_incomes_idrec_id` FOREIGN KEY (`idrec_id`) REFERENCES `idrec` (`id`),
-	CONSTRAINT `yearly_incomes_bpfdec_id` FOREIGN KEY (`bpfdec_id`) REFERENCES `bpfdec` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Registro de rendimentos anuais isentos';
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Registro de rendimentos mensais e anuais';
 
 CREATE TABLE `brpde` (
 	`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -162,7 +143,7 @@ CREATE TABLE `vrpde` (
 	CONSTRAINT `vrpde_brpde_id` FOREIGN KEY (`brpde_id`) REFERENCES `brpde` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Registro valores de rendimentos pagos a residentes exterior';
 
-CREATE VIEW `monthly_incomes_view` AS
+CREATE VIEW `incomes_view` AS
 SELECT
 	`df`.`id` AS `dirf_id`,
 	`df`.`reference_year` AS `dirf_reference_year`,
@@ -193,91 +174,36 @@ SELECT
 	IF(`pj`.`id` IS NOT NULL, 'BPJDEC', 'BPFDEC') AS `beneficiary_type`,
 	COALESCE(`pj`.`cnpj`, `pf`.`cpf`) AS `beneficiary_cpf_cnpj`,
 	COALESCE(`pj`.`company_name`, `pf`.`name`) AS `beneficiary_name`,
-	`mi`.`type` AS `monthly_incomes_type`,
-	`mi`.`month` AS `monthly_incomes_month`,
-	`mi`.`value` AS `monthly_incomes_value`
+	`in`.`type` AS `incomes_type`,
+	`in`.`description` AS `incomes_description`,
+	`in`.`month` AS `incomes_month`,
+	`in`.`value` AS `incomes_value`
 FROM
-	`monthly_incomes` AS `mi`
+	`incomes` AS `in`
 LEFT JOIN
 	`bpfdec` AS `pf`
 ON
-	`pf`.`id` = `mi`.`bpfdec_id`
+	`pf`.`id` = `in`.`bpfdec_id`
 LEFT JOIN
 	`bpjdec` AS `pj`
 ON
-	`pj`.`id` = `mi`.`bpjdec_id`
+	`pj`.`id` = `in`.`bpjdec_id`
 INNER JOIN
 	`idrec` AS `ir`
 ON
-	`ir`.`id` = `mi`.`idrec_id`
+	`ir`.`id` = `in`.`idrec_id`
 INNER JOIN
 	`decpj` AS `dj`
 ON
-	`dj`.`id` = `mi`.`decpj_id`
+	`dj`.`id` = `in`.`decpj_id`
 INNER JOIN
 	`respo` AS `rs`
 ON
-	`rs`.`id` = `mi`.`respo_id`
+	`rs`.`id` = `in`.`respo_id`
 INNER JOIN
 	`dirf` AS `df`
 ON
-	`df`.`id` = `mi`.`dirf_id`;
-
-CREATE VIEW `yearly_incomes_view` AS
-SELECT
-	`df`.`id` AS `dirf_id`,
-	`df`.`reference_year` AS `dirf_reference_year`,
-	`df`.`calendar_year` AS `dirf_calendar_year`,
-	`df`.`rectification_indicator` AS `dirf_rectification_indicator`,
-	`df`.`receipt_number` AS `dirf_receipt_number`,
-	`df`.`created` AS `dirf_created`,
-	`rs`.`id` AS `respo_id`,
-	`rs`.`name` AS `respo_name`,
-	`rs`.`cpf` AS `respo_cpf`,
-	`dj`.`id` AS `decpj_id`,
-	`dj`.`cnpj` AS `decpj_cnpj`,
-	`dj`.`company_name` AS `decpj_company_name`,
-	`dj`.`declarant_nature` AS `decpj_declarant_nature`,
-	`dj`.`responsible_cpf` AS `decpj_responsible_cpf`,
-	`dj`.`ostensive_partner` AS `decpj_ostensive_partner`,
-	`dj`.`court_decision_depositary` AS `decpj_court_decision_depositary`,
-	`dj`.`investment_fund_institution` AS `decpj_investment_fund_insitution`,
-	`dj`.`incomes_paid_abroad` AS `decpj_incomes_paid_abroad`,
-	`dj`.`private_healthcare` AS `decpj_private_healthcare`,
-	`dj`.`fifa_worldcups_payments` AS `decpj_fifa_worldcups_payments`,
-	`dj`.`olympic_games_payments` AS `decpj_olympic_games_payments`,
-	`dj`.`special_situation` AS `decpj_special_situation`,
-	`dj`.`event_date` AS `decpj_event_date`,
-	`ir`.`id` AS `idrec_id`,
-	`ir`.`revenue_code` AS `idrec_revenue_code`,
-	`pf`.`id` AS `beneficiary_id`,
-	`pf`.`cpf` AS `beneficiary_cpf_cnpj`,
-	`pf`.`name` AS `beneficiary_name`,
-	`yi`.`type` AS `yearly_incomes_type`,
-	`yi`.`description` AS `yearly_incomes_description`,
-	`yi`.`value` AS `yearly_incomes_value`
-FROM
-	`yearly_incomes` AS `yi`
-INNER JOIN
-	`bpfdec` AS `pf`
-ON
-	`pf`.`id` = `yi`.`bpfdec_id`
-INNER JOIN
-	`idrec` AS `ir`
-ON
-	`ir`.`id` = `yi`.`idrec_id`
-INNER JOIN
-	`decpj` AS `dj`
-ON
-	`dj`.`id` = `yi`.`decpj_id`
-INNER JOIN
-	`respo` AS `rs`
-ON
-	`rs`.`id` = `yi`.`respo_id`
-INNER JOIN
-	`dirf` AS `df`
-ON
-	`df`.`id` = `yi`.`dirf_id`;
+	`df`.`id` = `in`.`dirf_id`;
 
 CREATE VIEW `vrpde_view` AS
 SELECT

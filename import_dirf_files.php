@@ -481,12 +481,10 @@ class ImportDirfFiles {
 				case 'RIVC':
 				case 'RIBMR':
 				case 'RICAP':
-					$this->__importMonthlyIncomes($line);
-					break;
 				case 'RIL96':
 				case 'RIPTS':
 				case 'RIO':
-					$this->__importYearlyIncomes($line);
+					$this->__importIncomes($line);
 					break;
 				case 'BRPDE':
 					$this->__importBrpde($line);
@@ -713,8 +711,8 @@ class ImportDirfFiles {
 	private function __importBpfdec($line) {
 		/*
 		 * Configura o atributo "__bpjdecId" como nulo para que subsequentemente, na execução do método
-		 * "__importMonthlyIncomes()", os registros de valores mensais de rendimentos e imposto retido
-		 * na fonte possam ser identificados como pertencentes a um beneficiario pessoa física
+		 * "__importIncomes()", os registros de valores mensais de rendimentos e imposto retido na fonte
+		 * possam ser identificados como pertencentes a um beneficiario pessoa física
 		 */
 		$this->__bpjdecId = null;
 
@@ -762,8 +760,8 @@ class ImportDirfFiles {
 	private function __importBpjdec($line) {
 		/*
 		 * Configura o atributo "__bpfdecId" como nulo para que subsequentemente, na execução do método
-		 * "__importMonthlyIncomes()", os registros de valores mensais de rendimentos e imposto retido
-		 * na fonte possam ser identificados como pertencentes a um beneficiario pessoa jurídica
+		 * "__importIncomes()", os registros de valores mensais de rendimentos e imposto retido na fonte
+		 * possam ser identificados como pertencentes a um beneficiario pessoa jurídica
 		 */
 		$this->__bpfdecId = null;
 
@@ -801,30 +799,63 @@ class ImportDirfFiles {
 	}
 
 	/**
-	 * Importa dados referentes ao registro de valores mensais de rendimentos e imposto retido na fonte
+	 * Importa dados referentes ao registro de valores mensais e/ou anuais de rendimentos e imposto retido na fonte
 	 *
 	 * @param int $line Linha do arquivo DIRF
 	 * @access private
 	 * @return void
 	 */
-	private function __importMonthlyIncomes($line) {
-		// Configura os dados da linha vigente de acordo com as respectivas colunas da tabela "monthly_incomes" no banco de dados
-		for ($c = 1; $c <= 13; $c++) {
-			$value = !empty($line[$c]) ? floatval(intval($line[$c]) / 100) : 0;
-			$data = array(
-				'dirf_id'   => $this->__dirfId,
-				'respo_id'  => $this->__respoId,
-				'decpj_id'  => $this->__decpjId,
-				'idrec_id'  => $this->__idrecId,
-				'bpfdec_id' => $this->__bpfdecId,
-				'bpjdec_id' => $this->__bpjdecId,
-				'type'      => !empty($line[0]) ? utf8_decode($line[0]) : null,
-				'month'     => $c,
-				'value'     => $value,
-				'modified'  => date('Y-m-d H:i:s')
+	private function __importIncomes($line) {
+
+		/*
+		 * Configura os valores em comum entre os rendimentos mensais e anuais de acordo com as colunas
+		 * da tabela "incomes" do banco de dados
+		 */
+		$type = utf8_decode($line[0]);
+		$common_data = array(
+			'dirf_id'   => $this->__dirfId,
+			'respo_id'  => $this->__respoId,
+			'decpj_id'  => $this->__decpjId,
+			'idrec_id'  => $this->__idrecId,
+			'bpfdec_id' => $this->__bpfdecId,
+			'bpjdec_id' => $this->__bpjdecId,
+			'type'      => $type,
+			'modified'  => date('Y-m-d H:i:s')
+		);
+
+		/*
+		 * Verifica se o registro é referente a um rendimento mensal ou anual e configura, formata
+		 * o registro de acordo com seu tipo e o insere em buffer de inserção/atualização no banco
+		 * de dados
+		 */
+		$buffer = array();
+		if (!in_array($type, array('RIL96', 'RIPTS', 'RIO'))) {
+			// Rendimentos mensais
+			for ($c = 1; $c <= 13; $c++) {
+				$value = !empty($line[$c]) ? floatval(intval($line[$c]) / 100) : 0;
+				$specific_data = array(
+					'month'       => $c,
+					'description' => null,
+					'value'       => $value
+				);
+
+				$buffer[] = array_merge($common_data, $specific_data);
+			}
+		} else {
+			// Rendimentos anuais
+			$value = !empty($line[1]) ? floatval(intval($line[1]) / 100) : 0;
+			$specific_data = array(
+				'month'       => null,
+				'description' => !empty($line[2]) ? utf8_decode($line[2]) : null,
+				'value'       => $value
 			);
 
-			// Verfica a existência de registro equivalente na tabela "monthly_incomes" do banco de dados
+			$buffer[] = array_merge($common_data, $specific_data);
+		}
+
+		// Percorre o buffer criado para realizar as interações com o banco de dados
+		foreach ($buffer as $record) {
+			// Verfica a existência de registro equivalente na tabela "incomes" do banco de dados
 			$conditions = array(
 				'dirf_id'   => $this->__dirfId,
 				'respo_id'  => $this->__respoId,
@@ -832,63 +863,20 @@ class ImportDirfFiles {
 				'idrec_id'  => $this->__idrecId,
 				'bpfdec_id' => $this->__bpfdecId,
 				'bpjdec_id' => $this->__bpjdecId,
-				'type'      => $data['type'],
-				'month'     => $data['month']
+				'type'      => $record['type'],
+				'month'     => $record['month']
 			);
 
-			$monthly_incomes_id = $this->__selectRecordId('monthly_incomes', $conditions);
+			$incomes_id = $this->__selectRecordId('incomes', $conditions);
 
 			// Se o registro já existe, o mesmo é atualizado. Caso contrário, um registro novo é criado
-			if (!is_null($monthly_incomes_id)) {
-				$this->__updateRecord('monthly_incomes', $data, array('id' => $monthly_incomes_id));
+			if (!is_null($incomes_id)) {
+				$this->__updateRecord('incomes', $record, array('id' => $incomes_id));
 			} else {
-				$data['created'] = $data['modified'];
+				$record['created'] = $record['modified'];
 
-				$this->__insertRecord('monthly_incomes', $data);
+				$this->__insertRecord('incomes', $record);
 			}
-		}
-	}
-
-	/**
-	 * Importa dados referentes ao registro de rendimentos isentos anuais
-	 *
-	 * @param int $line Linha do arquivo DIRF
-	 * @access private
-	 * @return void
-	 */
-	private function __importYearlyIncomes($line) {
-		// Configura os dados da linha vigente de acordo com as respectivas colunas da tabela "yearly_incomes" no banco de dados
-		$data = array(
-			'dirf_id'     => $this->__dirfId,
-			'respo_id'    => $this->__respoId,
-			'decpj_id'    => $this->__decpjId,
-			'idrec_id'    => $this->__idrecId,
-			'bpfdec_id'   => $this->__bpfdecId,
-			'type'        => !empty($line[0]) ? utf8_decode($line[0])            : null,
-			'value'       => !empty($line[1]) ? floatval(intval($line[1]) / 100) : 0,
-			'description' => !empty($line[2]) ? utf8_decode($line[2])            : null,
-			'modified'    => date('Y-m-d H:i:s')
-		);
-
-		// Verfica a existência de registro equivalente na tabela "yearly_incomes" do banco de dados
-		$conditions = array(
-			'dirf_id'   => $this->__dirfId,
-			'respo_id'  => $this->__respoId,
-			'decpj_id'  => $this->__decpjId,
-			'idrec_id'  => $this->__idrecId,
-			'bpfdec_id' => $this->__bpfdecId,
-			'type'      => $data['type']
-		);
-
-		$yearly_incomes_id = $this->__selectRecordId('yearly_incomes', $conditions);
-
-		// Se o registro já existe, o mesmo é atualizado. Caso contrário, um registro novo é criado
-		if (!is_null($yearly_incomes_id)) {
-			$this->__updateRecord('yearly_incomes', $data, array('id' => $yearly_incomes_id));
-		} else {
-			$data['created'] = $data['modified'];
-
-			$this->__insertRecord('yearly_incomes', $data);
 		}
 	}
 

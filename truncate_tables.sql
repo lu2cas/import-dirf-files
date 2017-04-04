@@ -1,4 +1,4 @@
-truncate table monthly_incomes;
+truncate table incomes;
 truncate table bpfdec;
 truncate table bpjdec;
 truncate table idrec;
