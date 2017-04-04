@@ -221,7 +221,7 @@ class ImportDirfFiles {
 			@$f = fopen($this->__dirfFilePath, 'r');
 			if ($f) {
 				while ($line = trim(fgets($f, 1024))) {
-					if ($line == 'FIMDIRF|') {
+					if (strtoupper($line) == 'FIMDIRF|') {
 						break;
 					}
 					$data[] = explode('|', $line);
