@@ -713,7 +713,7 @@ class ImportDirfFiles {
 	private function __importBpfdec($line) {
 		/*
 		 * Configura o atributo "__bpjdecId" como nulo para que subsequentemente, na execução do método
-		 * "__importMonthlyIncomes()", os registros de valores mensais re rendimentos e imposto retido
+		 * "__importMonthlyIncomes()", os registros de valores mensais de rendimentos e imposto retido
 		 * na fonte possam ser identificados como pertencentes a um beneficiario pessoa física
 		 */
 		$this->__bpjdecId = null;
