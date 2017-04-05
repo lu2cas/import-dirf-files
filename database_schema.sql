@@ -25,7 +25,8 @@ CREATE TABLE `respo` (
 	`email` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
 	`created` datetime NOT NULL,
 	`modified` datetime NOT NULL,
-	PRIMARY KEY (`id`)
+	PRIMARY KEY (`id`),
+	KEY `respo_cpf` (`cpf`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Registro do responsável pelo preenchimento da DIRF';
 
 CREATE TABLE `decpj` (
@@ -52,9 +53,11 @@ CREATE TABLE `decpj` (
 CREATE TABLE `idrec` (
 	`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
 	`revenue_code` varchar(4) COLLATE utf8_unicode_ci NOT NULL,
+	`description` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
 	`created` datetime NOT NULL,
 	`modified` datetime NOT NULL,
-	PRIMARY KEY (`id`)
+	PRIMARY KEY (`id`),
+	KEY `idrec_revenue_code` (`revenue_code`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Registro de identificação do código de receita';
 
 CREATE TABLE `bpfdec` (
@@ -170,6 +173,7 @@ SELECT
 	`dj`.`event_date` AS `decpj_event_date`,
 	`ir`.`id` AS `idrec_id`,
 	`ir`.`revenue_code` AS `idrec_revenue_code`,
+	`ir`.`description` AS `idrec_description`,
 	COALESCE(`pj`.`id`, `pf`.`id`) AS `beneficiary_id`,
 	IF(`pj`.`id` IS NOT NULL, 'BPJDEC', 'BPFDEC') AS `beneficiary_type`,
 	COALESCE(`pj`.`cnpj`, `pf`.`cpf`) AS `beneficiary_cpf_cnpj`,
@@ -246,3 +250,64 @@ INNER JOIN
 	`dirf` AS `df`
 ON
 	`df`.`id` = `br`.`dirf_id`;
+
+INSERT INTO	`idrec`
+	(`revenue_code`, `description`, `created`, `modified`)
+VALUES
+	('0561', 'Trabalho assalariado no país e ausentes no exterior a serviço do país', now(), now()),
+	('0588', 'Trabalho sem vínculo empregatício', now(), now()),
+	('1889', 'Rendimentos acumulados - Art. 12-A da lei nº 7.713, de 22 de dezembro de 1988', now(), now()),
+	('3533', 'Proventos de aposentadoria, reserva, reforma ou pensão pagos pela previdência pública', now(), now()),
+	('3562', 'Participação nos lucros ou resultados (PLR)', now(), now()),
+	('3223', 'Resgate de previdência complementar - Modalidade contribuição definida/variável - Não optante pela tributação exclusiva', now(), now()),
+	('3540', 'Benefício de previdência complementar - Não optante pela tributação exclusiva', now(), now()),
+	('3556', 'Resgate de previdência complementar - Modalidade benefício definido - Não optante pela tributação exclusiva', now(), now()),
+	('5565', 'Benefício de previdência complementar - Optante pela tributação exclusiva', now(), now()),
+	('3579', 'Resgate de previdência complementar - Optante pela tributação exclusiva', now(), now()),
+	('3208', 'Aluguéis, royalties e juros pagos a pessoa física', now(), now()),
+	('6904', 'Indenizações por danos morais', now(), now()),
+	('6891', 'Benefício ou resgate de seguro de vida com cláusula de cobertura por sobrevivência - Não optante pela tributação exclusiva', now(), now()),
+	('8053', 'Aplicações financeiras de renda fixa, exceto em fundos de investimento - Pessoa física', now(), now()),
+	('1708', 'Remuneração de serviços profissionais prestados por pessoa jurídica (art. 52 da lei nº 7.450, de 1985)', now(), now()),
+	('3280', 'Remuneração de serviços pessoais prestados por associados de cooperativas de trabalho (art. 45 da lei nº 8.541, de 1992)', now(), now()),
+	('3426', 'Aplicações financeiras de renda fixa, exceto em fundos de investimento - Pessoa jurídica', now(), now()),
+	('3746', 'Retenção na fonte sobre pagamentos referentes à aquisição de autopeças à pessoa jurídica contribuinte da Cofins', now(), now()),
+	('3770', 'Retenção na fonte sobre pagamentos referentes à aquisição de autopeças à pessoa jurídica contribuinte do PIS/Pasep', now(), now()),
+	('5944', 'Pagamentos de pessoa jurídica a pessoa jurídica por serviços de assessoria creditícia, mercadológica, gestão de crédito, seleção e riscos e administração de contas a pagar e a receber', now(), now()),
+	('5952', 'Retenção na fonte sobre pagamentos a pessoa jurídica contribuinte da CSLL, da Cofins e da contribuição para o PIS/Pasep', now(), now()),
+	('5960', 'Retenção de Cofins sobre pagamentos efetuados por pessoas jurídicas de direito privado', now(), now()),
+	('5979', 'Retenção de PIS/Pasep sobre pagamentos efetuados por pessoas jurídicas de direito privado', now(), now()),
+	('5987', 'Retenção de CSLL sobre pagamentos efetuados por pessoas jurídicas de direito privado', now(), now()),
+	('4085', 'Retenção de CSLL, cofins e PIS/Pasep sobre pagamentos efetuados por órgãos, autarquias e fundações dos estados, Distrito Federal e municípios', now(), now()),
+	('4397', 'Retenção de CSLL sobre pagamentos efetuados por órgãos, autarquias e fundações dos estados, Distrito Federal e municípios', now(), now()),
+	('4407', 'Retenção de Cofins sobre pagamentos efetuados por órgãos, autarquias e fundações dos estados, Distrito Federal e municípios', now(), now()),
+	('4409', 'Retenção de PIS/Pasep sobre pagamentos efetuados por órgãos, autarquias e fundações dos estados, Distrito Federal e municípios', now(), now()),
+	('8045', 'Serviços de propaganda prestados por pessoa jurídica - Comissões e corretagens pagas a pessoa jurídica', now(), now()),
+	('0916', 'Prêmios e sorteios em geral, títulos de capitalização, prêmios de proprietários e criadores de cavalos de corrida e prêmios em bens e serviços', now(), now()),
+	('8673', 'Jogos de bingo permanente ou eventual - Prêmios em bens e serviços', now(), now()),
+	('0924', 'Fundo de investimento cultural e artístico (Ficart) e demais rendimentos do capital', now(), now()),
+	('3277', 'Rendimentos de partes beneficiárias ou de fundador', now(), now()),
+	('5204', 'Juros e indenizações por lucros cessantes', now(), now()),
+	('5232', 'Fundos de investimento imobiliário', now(), now()),
+	('5273', 'Operações de SWAP', now(), now()),
+	('5706', 'Juros sobre o capital próprio', now(), now()),
+	('5928', 'Rendimentos decorrentes de decisões da justiça federal, exceto o disposto no art. 12-A da lei nº 7.713, de 1988', now(), now()),
+	('5936', 'Rendimentos decorrentes de decisões da justiça do trabalho, exceto o disposto no art. 12-A da lei nº 7.713, de 1988', now(), now()),
+	('1895', 'Rendimentos decorrentes de decisão da justiça dos estados/Distrito Federal, exceto o disposto no art. 12-A da lei nº 7.713, de 1988', now(), now()),
+	('6800', 'Fundos de investimento e fundos de investimento em quotas de fundos de investimento', now(), now()),
+	('6813', 'Fundos de investimento em ações e fundo de investimento em quotas de fundos de investimento em ações', now(), now()),
+	('8468', 'Operações day trade', now(), now()),
+	('9385', 'Multas e vantagens', now(), now()),
+	('5557', 'Mercado de renda variável', now(), now()),
+	('0422', 'Royalties e pagamentos de assistência técnica', now(), now()),
+	('0490', 'Aplicações em fundos de conversão de débitos externos', now(), now()),
+	('0481', 'Juros e comissões em geral', now(), now()),
+	('9453', 'Juros sobre o capital próprio', now(), now()),
+	('9478', 'Aluguel e arrendamento', now(), now()),
+	('5286', 'Aplicações financeiras/entidades de investimento coletivo', now(), now()),
+	('0473', 'Rendas e proventos de qualquer natureza', now(), now()),
+	('9412', 'Fretes internacionais', now(), now()),
+	('0610', 'Transporte rodoviário internacional de carga - Sociedade unipessoal', now(), now()),
+	('9466', 'Previdência privada e Fapi', now(), now()),
+	('9427', 'Remuneração de direitos', now(), now()),
+	('5192', 'Obras audiovisuais', now(), now());

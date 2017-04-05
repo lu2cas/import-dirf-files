@@ -641,7 +641,7 @@ class ImportDirfFiles {
 			)
 		);
 
-		// Se o registro já existe, o mesmo é atualizado. Caso contrário, um registro novo é criado.
+		// Se o registro já existe, o mesmo é atualizado. Caso contrário, um registro novo é criado
 		if (!is_null($this->__decpjId)) {
 			$this->__updateRecord('decpj', $data, array('id' => $this->__decpjId));
 		} else {
@@ -683,10 +683,8 @@ class ImportDirfFiles {
 			)
 		);
 
-		// Se o registro já existe, o mesmo é atualizado. Caso contrário, um registro novo é criado.
-		if (!is_null($this->__idrecId)) {
-			$this->__updateRecord('idrec', $data, array('id' => $this->__idrecId));
-		} else {
+		// Se o registro não existe, o mesmo é criado. Caso contrário, um registro novo é criado
+		if (is_null($this->__idrecId)) {
 			$data['created'] = $data['modified'];
 
 			$this->__insertRecord('idrec', $data);
