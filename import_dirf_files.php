@@ -5,7 +5,7 @@
  * @author  Luccas Carvalho Silveira
  *
  * Esta classe tem por objetivo realizar a importação dos arquivos de texto
- * disponibilizados pela receita federal contentodo os dados de de declaração
+ * disponibilizados pela receita federal contentodo os dados de declaração
  * de imposto de renda retido na fonte
  */
 class ImportDirfFiles {
@@ -95,6 +95,11 @@ class ImportDirfFiles {
 	 */
 	private $__brpdeId;
 
+	/**
+	 * Denied revenue codes
+	 */
+	private $__deniedRevenueCodes;
+
 	// Construtor
 	public function __construct() {
 		set_time_limit(0);
@@ -112,6 +117,11 @@ class ImportDirfFiles {
 		}
 
 		$this->__logFile = $log_directory . DS . sprintf('log-%s.txt', date('dmYHis'));
+
+		$this->__deniedRevenueCodes = array(
+			'0561',
+			'3562'
+		);
 
 		$this->__connectToDatabase();
 	}
@@ -220,11 +230,27 @@ class ImportDirfFiles {
 		try {
 			@$f = fopen($this->__dirfFilePath, 'r');
 			if ($f) {
+				$data = array();
+
+				$denied_revenue_code = false;
+
 				while ($line = trim(fgets($f, 1024))) {
 					if (strtoupper($line) == 'FIMDIRF|') {
 						break;
 					}
-					$data[] = explode('|', $line);
+
+					$line_data = explode('|', $line);
+					if (strtoupper(current($line_data)) == 'IDREC') {
+						if (in_array($line_data[1], $this->__deniedRevenueCodes)) {
+							$denied_revenue_code = true;
+						} else {
+							$denied_revenue_code = false;
+						}
+					}
+
+					if (!$denied_revenue_code) {
+						$data[] = $line_data;
+					}
 				}
 				fclose($f);
 
