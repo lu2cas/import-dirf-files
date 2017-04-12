@@ -96,33 +96,39 @@ class ImportDirfFiles {
 	private $__brpdeId;
 
 	/**
-	 * Denied revenue codes
+	 * Conjunto de códigos da receita que devem ser ignorados durante a importação
 	 */
 	private $__deniedRevenueCodes;
 
 	// Construtor
 	public function __construct() {
+		// Configura constantes
 		set_time_limit(0);
-
 		define('APP_DIR', dirname(dirname(__FILE__)));
 		define('DS', DIRECTORY_SEPARATOR);
 
+		// Configura os dados de acesso ao banco de dados a partir de arquivo externo
 		$this->__databaseConfig = json_decode(file_get_contents('database_config.json'), true);
 
+		// Configura o diretório que deve conter a estrutura de arquivos DIRF
 		$this->__dirfFilesDirectory = dirname(__FILE__) . DS . 'dirf_files';
 
-		$log_directory = dirname(__FILE__) . DS . 'log_files';
-		if (!is_dir($log_directory)) {
-			mkdir($log_directory);
+		// Configura o diretório onde devem ser gravados os arquivos de log de importação
+		$log_files_directory = dirname(__FILE__) . DS . 'log_files';
+		if (!is_dir($log_files_directory)) {
+			mkdir($log_files_directory);
 		}
 
-		$this->__logFile = $log_directory . DS . sprintf('log-%s.txt', date('dmYHis'));
+		// Configira o path do arquivo de log referente a importação vigente
+		$this->__logFile = $log_files_directory . DS . sprintf('log-%s.txt', date('dmYHis'));
 
+		// Configura os códigos da receita que devem ser ignorados durante a importação
 		$this->__deniedRevenueCodes = array(
 			'0561',
 			'3562'
 		);
 
+		// Abre uma conexão com o banco de dados
 		$this->__connectToDatabase();
 	}
 
