@@ -196,7 +196,7 @@ class ImportDirfFiles {
 	}
 
 	/**
-	 * Conecta com o banco de dados
+	 * Abre uma conexão com o banco de dados
 	 *
 	 * @access private
 	 * @return void
@@ -224,22 +224,27 @@ class ImportDirfFiles {
 	 * Lê e realiza o parse de um arquivo DIRF
 	 *
 	 * @access private
-	 * @return array $data Dados do arquivo
+	 * @return array $data Conjunto de linhas válidas do arquivo
 	 */
 	private function __readDirfFile() {
 		try {
+			// Abre o arquivo DIRF para leitura
 			@$f = fopen($this->__dirfFilePath, 'r');
 			if ($f) {
 				$data = array();
 
 				$denied_revenue_code = false;
 
+				// Itera sobre as linhas do arquivo até chegar ao identificador de final de arquivo
 				while ($line = trim(fgets($f, 1024))) {
 					if (strtoupper($line) == 'FIMDIRF|') {
 						break;
 					}
 
+					// Realiza o parse da linha
 					$line_data = explode('|', $line);
+
+					// Verifica se a linha está associada a um registro de código de receita negado
 					if (strtoupper(current($line_data)) == 'IDREC') {
 						if (in_array($line_data[1], $this->__deniedRevenueCodes)) {
 							$denied_revenue_code = true;
@@ -248,10 +253,13 @@ class ImportDirfFiles {
 						}
 					}
 
+					// Adiciona a linha ao conjunto de linhas válidas se a linha não estiver associada a um código de receita negado
 					if (!$denied_revenue_code) {
 						$data[] = $line_data;
 					}
 				}
+
+				// Fecha o arquivo DIRF e retorna o conjunto de linhas válidas
 				fclose($f);
 
 				return $data;
@@ -300,8 +308,10 @@ class ImportDirfFiles {
 	 * @return void
 	 */
 	private function __recordDirfFileLog() {
+		// Abre o arquivo de log para escrita
 		$f = fopen($this->__logFile, 'a');
 
+		// Grava os dados referentes a importação do arquivo DIRF vigente
 		$fail_lines_count = count($this->__results['fail_lines']);
 		$ignored_lines_count = count($this->__results['ignored_lines']);
 
@@ -319,6 +329,7 @@ class ImportDirfFiles {
 		$status = $fail_lines_count > 0 ? 'algumas falhas' : 'sucesso';
 		fwrite($f, sprintf("Status: Arquivo importado com %s.\n", $status));
 
+		// Fecha o arquivo de log
 		fclose($f);
 	}
 
@@ -332,9 +343,9 @@ class ImportDirfFiles {
 	 */
 	private function __selectRecordId($table, $conditions) {
 		$id = null;
-
 		$bind_parameters = array();
 
+		// Monta a cláusula where do select
 		$where_clause = array();
 		foreach ($conditions as $field => $value) {
 			if (is_null($value)) {
@@ -347,6 +358,7 @@ class ImportDirfFiles {
 
 		$where_clause = !empty($where_clause) ? implode(' AND ', $where_clause) : '1 = 1';
 
+		// Monta e prepara o comando select
 		$statement = sprintf(
 			'SELECT %s.id FROM %s WHERE %s;',
 			$table,
@@ -356,8 +368,10 @@ class ImportDirfFiles {
 
 		$prepared_statement = $this->__link->prepare($statement);
 
+		// Executa o comando select com os valores passados por parâmetro
 		$prepared_statement->execute(array_values($bind_parameters));
 
+		// Isola e retorna o id do registro selecionado
 		if ($result = $prepared_statement->fetch()) {
 			$id = intval($result['id']);
 		}
@@ -375,21 +389,31 @@ class ImportDirfFiles {
 	 */
 	private function __insertRecord($table, $data) {
 		try {
+			// Inicia uma transaction de banco de dados
 			$this->__link->beginTransaction();
 
+			// Monta os sets do insert
 			$fields = implode(', ', array_keys($data));
 			$placeholders = implode(', ', array_fill(0, count($data), '?'));
+
+			// Monta e prepara o comando insert
 			$statement = sprintf('INSERT INTO %s(%s) VALUES(%s);', $table, $fields, $placeholders);
 
 			$prepared_statement = $this->__link->prepare($statement);
 
+			// Executa o comando update com os valores passados por parâmetro
 			$prepared_statement->execute(array_values($data));
 
+			// Realiza o commit da transaction de banco de dados
 			$this->__link->commit();
 
+			// Incrementa o número de inserts gerados a partir do arquivo DIRF vigente
 			$this->__results['inserts_count']++;
 		} catch(Exception $e) {
+			// Cancela o comando update
 			$this->__link->rollBack();
+
+			// Incrementa o número de falhas gerados a partir do arquivo DIRF vigente
 			$this->__results['fail_lines'][] = $this->__dirfFileCurrentLineNumber;
 		}
 	}
@@ -405,13 +429,16 @@ class ImportDirfFiles {
 	 */
 	private function __updateRecord($table, $data, $conditions) {
 		try {
+			// Inicia uma transaction de banco de dados
 			$this->__link->beginTransaction();
 
+			// Monta os sets do update 
 			$fields = array();
 			foreach (array_keys($data) as $field) {
 				$fields[] = sprintf('%s = ?', $field);
 			}
 
+			// Monta a cláusula where do update
 			$where_clause = array();
 			foreach ($conditions as $field => $value) {
 				if (is_null($value)) {
@@ -422,19 +449,26 @@ class ImportDirfFiles {
 				}
 			}
 
+			// Monta e prepara o comando update
 			$statement = sprintf('UPDATE %s SET %s WHERE %s;', $table, implode(', ', $fields), implode(' AND ', $where_clause));
 
 			$prepared_statement = $this->__link->prepare($statement);
 
 			$bind_parameters = array_merge(array_values($data), array_values($conditions));
 
+			// Executa o comando update com os valores passados por parâmetro
 			$prepared_statement->execute($bind_parameters);
 
+			// Realiza o commit da transaction de banco de dados
 			$this->__link->commit();
 
+			// Incrementa o número de updates gerados a partir do arquivo DIRF vigente
 			$this->__results['updates_count']++;
 		} catch(Exception $e) {
+			// Cancela o comando update
 			$this->__link->rollBack();
+
+			// Incrementa o número de falhas gerados a partir do arquivo DIRF vigente
 			$this->__results['fail_lines'][] = $this->__dirfFileCurrentLineNumber;
 		}
 	}
